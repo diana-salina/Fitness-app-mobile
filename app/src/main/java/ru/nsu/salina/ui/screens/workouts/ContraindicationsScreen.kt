@@ -2,6 +2,7 @@ package ru.nsu.salina.ui.screens.workouts
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -56,7 +57,8 @@ fun ContraindicationsScreen(
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Назад")
                     }
-                }
+                },
+                windowInsets = WindowInsets(0)
             )
         },
         bottomBar = {
@@ -74,7 +76,8 @@ fun ContraindicationsScreen(
                     }
                 }
             }
-        }
+        },
+        contentWindowInsets = WindowInsets(0)
     ) { padding ->
         when {
             state.isLoading -> LoadingScreen()

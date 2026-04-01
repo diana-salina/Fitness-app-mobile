@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
@@ -25,7 +26,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -42,6 +42,9 @@ import java.util.Locale
 @Composable
 fun CalendarScreen(viewModel: CalendarViewModel) {
     val state by viewModel.uiState.collectAsState()
+    val thisMonthCount = state.completedDates.count {
+        it.year == state.today.year && it.month == state.today.month
+    }
 
     Column(
         modifier = Modifier
@@ -49,12 +52,18 @@ fun CalendarScreen(viewModel: CalendarViewModel) {
             .background(BackgroundWhite)
             .padding(vertical = 8.dp)
     ) {
+        Text(
+            text = "Календарь",
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
         MonthHeader(
             yearMonth = state.displayedMonth,
             onPrevious = viewModel::previousMonth,
             onNext = viewModel::nextMonth
         )
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(16.dp))
         WeekDaysHeader()
         Spacer(modifier = Modifier.height(4.dp))
         CalendarGrid(
@@ -62,6 +71,13 @@ fun CalendarScreen(viewModel: CalendarViewModel) {
             completedDates = state.completedDates,
             today = state.today
         )
+        Spacer(modifier = Modifier.weight(1f))
+        TodayInfoSection(
+            today = state.today,
+            thisMonthCount = thisMonthCount,
+            totalCount = state.completedDates.size
+        )
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 
@@ -127,7 +143,6 @@ private fun CalendarGrid(
 ) {
     val firstDay = yearMonth.atDay(1)
     val daysInMonth = yearMonth.lengthOfMonth()
-    // dayOfWeek: Monday=1, Sunday=7. Offset for Monday-first grid (0-based):
     val startOffset = firstDay.dayOfWeek.value - 1
     val totalRows = (startOffset + daysInMonth + 6) / 7
 
@@ -140,7 +155,7 @@ private fun CalendarGrid(
             Row(modifier = Modifier.fillMaxWidth()) {
                 for (col in 0..6) {
                     val dayOfMonth = row * 7 + col - startOffset + 1
-                    if (dayOfMonth < 1 || dayOfMonth > daysInMonth) {
+                    if (dayOfMonth !in 1..daysInMonth) {
                         Box(modifier = Modifier.weight(1f).aspectRatio(1f))
                     } else {
                         val date = yearMonth.atDay(dayOfMonth)
@@ -154,6 +169,69 @@ private fun CalendarGrid(
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun TodayInfoSection(today: LocalDate, thisMonthCount: Int, totalCount: Int) {
+    val dayOfWeek = today.dayOfWeek
+        .getDisplayName(TextStyle.FULL_STANDALONE, Locale("ru"))
+        .replaceFirstChar { it.uppercase() }
+    val month = today.month
+        .getDisplayName(TextStyle.FULL, Locale("ru"))
+    val dateText = "${today.dayOfMonth} $month, $dayOfWeek"
+
+    Column(modifier = Modifier.padding(horizontal = 16.dp)) {
+        Text(
+            text = "Сегодня",
+            style = MaterialTheme.typography.titleLarge,
+            fontWeight = FontWeight.Bold,
+            color = TextPrimary
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = dateText,
+            style = MaterialTheme.typography.bodyMedium,
+            color = TextSecondary
+        )
+        Spacer(modifier = Modifier.height(16.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            StatCard(
+                label = "Всего тренировок",
+                value = totalCount.toString(),
+                modifier = Modifier.weight(1f)
+            )
+            StatCard(
+                label = "В этом месяце",
+                value = thisMonthCount.toString(),
+                modifier = Modifier.weight(1f)
+            )
+        }
+    }
+}
+
+@Composable
+private fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier
+            .background(SurfaceBlue, RoundedCornerShape(12.dp))
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+    ) {
+        Text(
+            text = value,
+            style = MaterialTheme.typography.headlineMedium,
+            fontWeight = FontWeight.Bold,
+            color = PrimaryBlue
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = TextSecondary
+        )
     }
 }
 
@@ -194,7 +272,7 @@ private fun CalendarDayCell(
                     Box(
                         modifier = Modifier
                             .size(5.dp)
-                            .background(Color(0xFF13CF02), CircleShape)
+                            .background(PrimaryBlue, CircleShape)
                     )
                 }
             }
